@@ -1,4 +1,5 @@
 import binascii
+import os
 from base64 import *
 from hashlib import *
 from typing import Union, Tuple
@@ -69,12 +70,38 @@ class BruteForce:
         return None
 
 
-def aes_encryption():
-    pass
+class AESCipher:
+    MODE = AES.MODE_CBC
 
+    def pad(self, word, base):
+        return word + ((base - len(word) % base) * ' ')
 
-def symmetric_encryption():
-    pass
+    def encrypt(self, msg, key_size, password):
+        if key_size == 256:
+            salt = os.urandom(16)
+            # salt = b"\x00" + os.urandom(14) + b"\x00"
+            # b32encode(salt).decode('utf-8')
+            password = sha256(password.encode('ascii')).digest()
+        elif key_size == 128:
+            salt = os.urandom(16)
+            password = md5(password.encode('ascii')).digest()
+        else:
+            raise ("wrong key size")
+        crypter = AES.new(password, mode=self.MODE, IV=salt)
+        return binascii.b2a_base64(salt).decode("utf-8")[:-1], binascii.b2a_base64(crypter.encrypt(self.pad(msg, key_size))).decode(
+                                  "utf-8")[:-1]
+
+    def decrypt(self, enc, key_size,salt, password):
+        salt = binascii.a2b_base64(salt)
+        content = binascii.a2b_base64(enc)
+        if key_size == 256:
+            password = sha256(password.encode('ascii')).digest()
+        elif key_size == 128:
+            password = md5(password.encode('ascii')).digest()
+        else:
+            raise ("wrong key size")
+        crypter = AES.new(password, mode=self.MODE, IV=salt)
+        return crypter.decrypt(content).decode("utf-8")
 
 
 class RSA:
@@ -192,3 +219,4 @@ encoding_utils = Encoding()
 hashing_utils = Hashing()
 brute_force_utils = BruteForce()
 rsa_utils = RSA()
+aes_utils=AESCipher()
