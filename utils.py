@@ -172,7 +172,7 @@ class RSA:
         )
         return binascii.b2a_base64(signed).decode("utf-8")
 
-    def verify(self, msg: str, signed: str, public_key: RSAPublicKey):
+    def verify(self, msg: str, signed: str, public_key: RSAPublicKey) -> bool:
         try:
             public_key.verify(
                 binascii.a2b_base64(signed),
@@ -184,7 +184,8 @@ class RSA:
                 algorithm=hashes.SHA256()
             )
         except InvalidSignature:
-            print("The provided message or key or both are invalid")
+            return False
+        return True
 
 
 encoding_utils = Encoding()
