@@ -3,13 +3,18 @@ import os
 from base64 import *
 from hashlib import *
 from typing import Union, Tuple
-from Crypto.Cipher import AES
+from Crypto.Cipher import AES, DES
 from Crypto import Random
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKeyWithSerialization, RSAPublicKey
+
+
+class SymetricCipher:
+    def pad(self, word, base):
+        return word + ((base - len(word) % base) * ' ')
 
 
 class Encoding:
@@ -71,37 +76,54 @@ class BruteForce:
         return None
 
 
-class AESCipher:
+class AESCipher(SymetricCipher):
     MODE = AES.MODE_CBC
-
-    def pad(self, word, base):
-        return word + ((base - len(word) % base) * ' ')
 
     def encrypt(self, msg, key_size, password):
         if key_size == 256:
             salt = os.urandom(16)
-            # salt = b"\x00" + os.urandom(14) + b"\x00"
-            # b32encode(salt).decode('utf-8')
             password = sha256(password.encode('ascii')).digest()
         elif key_size == 128:
             salt = os.urandom(16)
             password = md5(password.encode('ascii')).digest()
         else:
-            raise ("wrong key size")
+            print("wrong key size")
+            return None
         crypter = AES.new(password, mode=self.MODE, IV=salt)
-        return binascii.b2a_base64(salt).decode("utf-8")[:-1], binascii.b2a_base64(crypter.encrypt(self.pad(msg, key_size))).decode(
-                                  "utf-8")[:-1]
+        return binascii.b2a_base64(salt).decode("utf-8")[:-1], binascii.b2a_base64(
+            crypter.encrypt(self.pad(msg, key_size))).decode(
+            "utf-8")[:-1]
 
-    def decrypt(self, enc, key_size,salt, password):
+    def decrypt(self, content, key_size, salt, password):
         salt = binascii.a2b_base64(salt)
-        content = binascii.a2b_base64(enc)
+        content = binascii.a2b_base64(content)
         if key_size == 256:
             password = sha256(password.encode('ascii')).digest()
         elif key_size == 128:
             password = md5(password.encode('ascii')).digest()
         else:
-            raise ("wrong key size")
+            print("wrong key size")
+            return None
         crypter = AES.new(password, mode=self.MODE, IV=salt)
+        return crypter.decrypt(content).decode("utf-8")
+
+
+class DESCipher(SymetricCipher):
+    MODE = DES.MODE_CBC
+
+    def encrypt(self, msg, password):
+        salt = os.urandom(8)
+        password = blake2b(password.encode("ascii"), digest_size=8).digest()
+        crypter = DES.new(password, mode=self.MODE, IV=salt)
+        return binascii.b2a_base64(salt).decode("utf-8")[:-1], binascii.b2a_base64(
+            crypter.encrypt(self.pad(msg, 8))).decode(
+            "utf-8")[:-1]
+
+    def decrypt(self, content, salt, password):
+        salt = binascii.a2b_base64(salt)
+        content = binascii.a2b_base64(content)
+        password = blake2b(password.encode("ascii"), digest_size=8).digest()
+        crypter = DES.new(password, mode=self.MODE, IV=salt)
         return crypter.decrypt(content).decode("utf-8")
 
 
@@ -220,4 +242,5 @@ encoding_utils = Encoding()
 hashing_utils = Hashing()
 brute_force_utils = BruteForce()
 rsa_utils = RSA()
-aes_utils=AESCipher()
+aes_utils = AESCipher()
+des_utils = DESCipher()
