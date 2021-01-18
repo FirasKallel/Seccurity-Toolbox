@@ -24,7 +24,7 @@ class Encoding:
             print("Wrong Base")
             return None
 
-    def decode(self, coded_msg: str, base: int) -> str:
+    def decode(self, coded_msg: str, base: int) -> Union[str, None]:
         if base == 64:
             return b64decode(coded_msg.encode('ascii')).decode("utf-8")
         elif base == 32:
@@ -32,7 +32,8 @@ class Encoding:
         elif base == 16:
             return b16decode(coded_msg.encode('ascii')).decode("utf-8")
         else:
-            raise Exception("Wrong Base")
+            print("Wrong Base")
+            return None
 
 
 class Hashing:
