@@ -3,8 +3,7 @@ import os
 from base64 import *
 from hashlib import *
 from typing import Union, Tuple
-from Crypto.Cipher import AES, DES
-from Crypto import Random
+from Crypto.Cipher import AES, DES, Blowfish, CAST
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -127,6 +126,57 @@ class DESCipher(SymetricCipher):
         return crypter.decrypt(content).decode("utf-8")
 
 
+class BlowfishCipher(SymetricCipher):
+    MODE = Blowfish.MODE_CBC
+
+    def encrypt(self, msg, key_size, password):
+        if key_size == 256:
+            salt = os.urandom(8)
+            password = sha256(password.encode('ascii')).digest()
+        elif key_size == 128:
+            salt = os.urandom(8)
+            password = md5(password.encode('ascii')).digest()
+        else:
+            print("wrong key size")
+            return None
+        crypter = Blowfish.new(password, mode=self.MODE, IV=salt)
+        return binascii.b2a_base64(salt).decode("utf-8")[:-1], binascii.b2a_base64(
+            crypter.encrypt(self.pad(msg, key_size))).decode(
+            "utf-8")[:-1]
+
+    def decrypt(self, content, key_size, salt, password):
+        salt = binascii.a2b_base64(salt)
+        content = binascii.a2b_base64(content)
+        if key_size == 256:
+            password = sha256(password.encode('ascii')).digest()
+        elif key_size == 128:
+            password = md5(password.encode('ascii')).digest()
+        else:
+            print("wrong key size")
+            return None
+        crypter = Blowfish.new(password, mode=self.MODE, IV=salt)
+        return crypter.decrypt(content).decode("utf-8")
+
+
+class CASTCipher(SymetricCipher):
+    MODE = CAST.MODE_CBC
+
+    def encrypt(self, msg, password):
+        salt = os.urandom(8)
+        password = blake2b(password.encode("ascii"), digest_size=8).digest()
+        crypter = CAST.new(password, mode=self.MODE, IV=salt)
+        return binascii.b2a_base64(salt).decode("utf-8")[:-1], binascii.b2a_base64(
+            crypter.encrypt(self.pad(msg, 8))).decode(
+            "utf-8")[:-1]
+
+    def decrypt(self, content, salt, password):
+        salt = binascii.a2b_base64(salt)
+        content = binascii.a2b_base64(content)
+        password = blake2b(password.encode("ascii"), digest_size=8).digest()
+        crypter = CAST.new(password, mode=self.MODE, IV=salt)
+        return crypter.decrypt(content).decode("utf-8")
+
+
 class RSA:
     def generate_keys(self, key_size: int, password: str, path: str = None) -> Union[
         Tuple[None, None, RSAPrivateKeyWithSerialization],
@@ -244,3 +294,5 @@ brute_force_utils = BruteForce()
 rsa_utils = RSA()
 aes_utils = AESCipher()
 des_utils = DESCipher()
+blowfish_utils = BlowfishCipher()
+cast_utils = CASTCipher()
