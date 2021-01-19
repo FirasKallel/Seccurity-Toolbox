@@ -17,24 +17,36 @@ class SymetricCipher:
 
 
 class Encoding:
-    def code(self, msg: str, base: int) -> Union[bytes, None]:
+    def code(self, msg: str, base: int) -> Union[str, None]:
         if base == 64:
-            return b64encode(msg.encode('ascii'))
+            return b64encode(msg.encode('ascii')).decode("utf-8")
         elif base == 32:
-            return b32encode(msg.encode('ascii'))
+            return b32encode(msg.encode('ascii')).decode("utf-8")
         elif base == 16:
-            return b16encode(msg.encode('ascii'))
+            return b16encode(msg.encode('ascii')).decode("utf-8")
         else:
             print("Wrong Base")
             return None
 
     def decode(self, coded_msg: str, base: int) -> Union[str, None]:
         if base == 64:
-            return b64decode(coded_msg.encode('ascii')).decode("utf-8")
+            try:
+                d = b64decode(coded_msg.encode('ascii')).decode("utf-8")
+            except:
+                d = "La base demandé n'est pas compatible. Veuillez réessayer en choisissant la bonne base"
+            return d
         elif base == 32:
-            return b32decode(coded_msg.encode('ascii')).decode("utf-8")
+            try:
+                d = b32decode(coded_msg.encode('ascii')).decode("utf-8")
+            except:
+                d = "La base demandé n'est pas compatible. Veuillez réessayer en choisissant la bonne base"
+            return d
         elif base == 16:
-            return b16decode(coded_msg.encode('ascii')).decode("utf-8")
+            try :
+                d = b16decode(coded_msg.encode('ascii')).decode("utf-8")
+            except:
+                d = "La base demandé n'est pas compatible. Veuillez réessayer en choisissant la bonne base"
+            return d
         else:
             print("Wrong Base")
             return None
