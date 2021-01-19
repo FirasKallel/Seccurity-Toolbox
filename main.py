@@ -314,18 +314,18 @@ if __name__ == '__main__':
         while True:
             clear()
             print_title()
-            choice = print_main_menu()
-            if choice == 1:
+            user_choice = print_main_menu()
+            if user_choice == 1:
                 encoding_menu()
-            elif choice == 2:
+            elif user_choice == 2:
                 hash_menu()
-            elif choice == 3:
+            elif user_choice == 3:
                 brute_force_menu()
-            elif choice == 4:
+            elif user_choice == 4:
                 symmetric_menu()
-            elif choice == 5:
+            elif user_choice == 5:
                 asymmetric_menu()
-            elif choice == 6:
+            elif user_choice == 6:
                 exit()
     except KeyboardInterrupt:
         print("See you soon.")
